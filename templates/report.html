@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+
+{% block title %}CodeLens AI - Project Report{% endblock %}
+
+{% block content %}
+<div class="report-page">
+    <div class="container">
+
+        <!-- Top Breadcrumbs -->
+        <div class="arch-breadcrumbs-bar" style="margin-bottom: 1.5rem;">
+            <div class="breadcrumbs-list">
+                <a href="{{ url_for('main.index') }}" class="breadcrumb-item">🏠 Home</a>
+                <span class="breadcrumb-sep">/</span>
+                <a href="{{ url_for('main.architecture') }}" class="breadcrumb-item">🏗️ Architecture</a>
+                <span class="breadcrumb-sep">/</span>
+                <span class="breadcrumb-item active" id="report-breadcrumb-repo">📄 Project Report</span>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                <a id="btn-top-arch" href="{{ url_for('main.architecture') }}" class="btn btn-xs btn-outline">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                    <span>🏗️ Architecture</span>
+                </a>
+                <a id="btn-top-chat" href="{{ url_for('main.chat') }}" class="btn btn-xs btn-outline" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>💬 AI Chat</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Repository Selector & Generator Action Card -->
+        <section class="card report-control-card" style="margin-bottom: 2rem; padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1.5rem;">
+                <div style="flex: 1; min-width: 300px;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                        <div class="brand-icon" style="width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; background: rgba(56, 189, 248, 0.1); border-radius: 8px; color: var(--accent-primary);">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 style="margin: 0; font-size: 1.35rem;">Project Report</h2>
+                            <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary);">
+                                Explains unfamiliar repositories in plain English first, backed by grounded architectural facts.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Repository Selector & Intake -->
+                    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-top: 1rem;">
+                        <div style="flex: 1; min-width: 260px;">
+                            <label for="report-repo-select" style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">
+                                <strong>Repository:</strong>
+                            </label>
+                            <select id="report-repo-select" class="form-input form-input-sm" onchange="onReportRepoSelected(this.value)" style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color);">
+                                <option value="">-- Choose an analyzed repository --</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 220px;">
+                            <label for="report-repo-input" style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">
+                                Or enter owner/repo:
+                            </label>
+                            <input type="text" id="report-repo-input" class="form-input form-input-sm" placeholder="e.g. psf/requests" style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color);" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generate & Action Buttons -->
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; align-items: flex-end; min-width: 260px;">
+                    <button id="btn-generate-report" class="btn btn-primary" onclick="triggerGenerateReport()" style="width: 100%; justify-content: center; padding: 0.75rem 1.25rem; font-weight: 600;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                        </svg>
+                        <span>Generate Project Report</span>
+                    </button>
+
+                    <!-- Export Actions (Visible Once Report is Loaded) -->
+                    <div id="report-export-actions" style="display: none; gap: 0.5rem; flex-wrap: wrap; width: 100%;">
+                        <a id="btn-download-md" href="#" class="btn btn-xs btn-outline" style="flex: 1; justify-content: center;" title="Download Markdown Report">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            <span>Download Markdown</span>
+                        </a>
+                        <a id="btn-download-html" href="#" class="btn btn-xs btn-outline" style="flex: 1; justify-content: center;" title="Download Standalone HTML Report">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            <span>Download HTML</span>
+                        </a>
+                        <button class="btn btn-xs btn-primary" onclick="printReport()" style="width: 100%; justify-content: center;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                            <span>Print / Save PDF</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Banner -->
+            <div id="report-status-banner" style="display: none; margin-top: 1rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span id="report-status-icon">✓</span>
+                    <span id="report-status-text">Report generated successfully.</span>
+                </div>
+                <span id="report-timestamp-badge" class="badge badge-secondary" style="font-size: 0.75rem;">Just now</span>
+            </div>
+        </section>
+
+        <!-- Loading State -->
+        <div id="report-loading" class="card" style="display: none; text-align: center; padding: 3rem 1rem; margin-bottom: 2rem;">
+            <div class="loading-spinner" style="margin: 0 auto 1rem auto;"></div>
+            <h3 style="margin: 0 0 0.5rem 0; font-size: 1.15rem;">Generating project report...</h3>
+            <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem;">
+                Synthesizing plain-English architectural overview, component flow, onboarding guide, and AST evidence.
+            </p>
+        </div>
+
+        <!-- Initial Placeholder State -->
+        <div id="report-placeholder" class="card" style="text-align: center; padding: 4rem 1.5rem; margin-bottom: 2rem;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem; opacity: 0.5; color: var(--accent-primary);">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            <h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem;">Select a Repository</h3>
+            <p style="margin: 0 auto 1.5rem auto; max-width: 520px; color: var(--text-muted); font-size: 0.875rem;">
+                Select a repository to explore its architecture, ask AI questions, or generate a project report.
+            </p>
+            <a href="/repositories" class="btn btn-sm btn-primary">
+                <span>Select Repository</span>
+            </a>
+        </div>
+
+        <!-- Report Content Display Wrapper -->
+        <div id="report-display-wrap" style="display: none;">
+
+            <!-- Header Card -->
+            <section class="card arch-header-card" style="margin-bottom: 1.5rem;">
+                <div class="arch-header-content">
+                    <div class="repo-avatar-wrap">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="repo-meta-wrap">
+                        <div class="repo-title-row">
+                            <h2 id="rep-repo-title" class="repo-title">Repository Report</h2>
+                            <a id="rep-github-link" href="#" target="_blank" rel="noopener noreferrer" class="repo-github-link">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                                </svg>
+                                <span>GitHub</span>
+                            </a>
+                        </div>
+                        <p id="rep-repo-desc" class="repo-desc-text" style="margin: 0.25rem 0 0.5rem 0; color: var(--text-secondary); font-size: 0.875rem;">Description</p>
+                        <div class="repo-badges-row">
+                            <span id="rep-primary-lang" class="badge badge-info">Python</span>
+                            <span id="rep-cycle-badge" class="badge badge-success">No detected cycles</span>
+                            <span id="rep-generated-date" class="badge badge-secondary">Date</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cross-Feature Navigation: Explore Architecture & Ask AI -->
+            <div class="card" style="margin-bottom: 1.5rem; padding: 0.85rem 1.25rem; display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                <div>
+                    <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-primary);">Explore the architecture interactively</div>
+                    <p style="margin: 0.15rem 0 0 0; font-size: 0.825rem; color: var(--text-muted);">View the component hierarchy, dependency flows, and code explorer.</p>
+                </div>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <a id="btn-rel-arch" href="{{ url_for('main.architecture') }}" class="btn btn-sm btn-primary">
+                        <span>View Architecture &rarr;</span>
+                    </a>
+                    <a id="btn-rel-chat" href="{{ url_for('main.chat') }}" class="btn btn-sm btn-outline">
+                        <span>💬 Ask AI Questions</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Table of Contents Fast-Jump Bar (15-Part Logical Structure) -->
+            <nav class="card" style="margin-bottom: 2rem; padding: 0.85rem 1rem;">
+                <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem;">
+                    Jump to Section (15-Part Comprehension Guide):
+                </div>
+                <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; font-size: 0.8rem;">
+                    <a href="#sec-1" class="btn btn-xs btn-outline">1. Overview</a>
+                    <a href="#sec-2" class="btn btn-xs btn-outline">2. What It Does</a>
+                    <a href="#sec-3" class="btn btn-xs btn-outline">3. How It Works</a>
+                    <a href="#sec-4" class="btn btn-xs btn-outline">4. Architecture</a>
+                    <a href="#sec-5" class="btn btn-xs btn-outline">5. Components</a>
+                    <a href="#sec-6" class="btn btn-xs btn-outline">6. Important Files</a>
+                    <a href="#sec-7" class="btn btn-xs btn-outline">7. Classes</a>
+                    <a href="#sec-8" class="btn btn-xs btn-outline">8. Functions</a>
+                    <a href="#sec-9" class="btn btn-xs btn-outline">9. Dependencies</a>
+                    <a href="#sec-10" class="btn btn-xs btn-outline">10. Component Relations</a>
+                    <a href="#sec-11" class="btn btn-xs btn-outline">11. For a New Developer</a>
+                    <a href="#sec-12" class="btn btn-xs btn-outline">12. Technical Analysis</a>
+                    <a href="#sec-13" class="btn btn-xs btn-outline">13. Code Graph</a>
+                    <a href="#sec-14" class="btn btn-xs btn-outline">14. Observations</a>
+                    <a href="#sec-15" class="btn btn-xs btn-outline">15. Conclusion</a>
+                </div>
+            </nav>
+
+            <!-- All 15 Numbered Human-Friendly Sections -->
+            <div id="report-rendered-sections">
+
+                <!-- Section 1: Project Overview -->
+                <section class="card" id="sec-1" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0; font-size: 1.2rem; color: var(--accent-primary);">1. Project Overview</h3>
+                    <p id="sec-1-text" style="line-height: 1.7; font-size: 0.95rem; margin-bottom: 1rem;"></p>
+                    <div id="sec-1-content"></div>
+                </section>
+
+                <!-- Section 2: What Does This Project Do? -->
+                <section class="card" id="sec-2" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0; font-size: 1.2rem; color: var(--accent-primary);">2. What Does This Project Do?</h3>
+                    <div id="sec-2-content" style="line-height: 1.7; font-size: 0.95rem;"></div>
+                </section>
+
+                <!-- Section 3: How Does the Project Work? -->
+                <section class="card" id="sec-3" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0; font-size: 1.2rem; color: var(--accent-primary);">3. How Does the Project Work?</h3>
+                    <div id="sec-3-content"></div>
+                </section>
+
+                <!-- Section 4: Architecture Overview -->
+                <section class="card" id="sec-4" style="margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <h3 style="margin: 0; font-size: 1.2rem; color: var(--accent-primary);">4. Architecture Overview</h3>
+                        <a id="btn-sec4-arch" href="{{ url_for('main.architecture') }}" class="btn btn-xs btn-outline">Interactive Architecture &rarr;</a>
+                    </div>
+                    <div id="sec-4-content"></div>
+                </section>
+
+                <!-- Section 5: Main Components -->
+                <section class="card" id="sec-5" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0; font-size: 1.2rem; color: var(--accent-primary);">5. Main Components</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">Major packages and folders forming the functional foundation of the repository.</p>
+                    <div id="sec-5-content"></div>
+                </section>
+
+                <!-- Section 6: Important Files -->
+                <section class="card" id="sec-6" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0; font-size: 1.2rem; color: var(--accent-primary);">6. Important Files</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">Key source files ranked by architectural connectivity, entry point proximity, and domain roles.</p>
+                    <div id="sec-6-content"></div>
+                </section>
+
+                <!-- Section 7: Important Classes -->
+                <section class="card" id="sec-7" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0; font-size: 1.2rem; color: var(--accent-primary);">7. Important Classes</h3>
+                    <div id="sec-7-content" style="max-height: 400px; overflow-y: auto;"></div>
+                </section>
+
+                <!-- Section 8: Important Functions / Methods -->
+                <section class="card" id="sec-8" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0; font-size: 1.2rem; color: var(--accent-primary);">8. Important Functions / Methods</h3>
+                    <div id="sec-8-content" style="max-height: 450px; overflow-y: auto;"></div>
+                </section>
+
+                <!-- Section 9: Dependencies -->
+                <section class="card" id="sec-9" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0; font-size: 1.2rem; color: var(--accent-primary);">9. Dependencies</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">Plain-English breakdown of why each dependency is utilized.</p>
+                    <div id="sec-9-content" style="max-height: 400px; overflow-y: auto;"></div>
+                </section>
+
+                <!-- Section 10: How the Components Relate -->
+                <section class="card" id="sec-10" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0; font-size: 1.2rem; color: var(--accent-primary);">10. How the Components Relate</h3>
+                    <div id="sec-10-content"></div>
+                </section>
+
+                <!-- Section 11: For a New Developer (Onboarding Guide) -->
+                <section class="card" id="sec-11" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0; font-size: 1.2rem; color: var(--accent-primary);">11. For a New Developer (Onboarding Guide)</h3>
+                    <div id="sec-11-content"></div>
+                </section>
+
+                <!-- Section 12: Technical Analysis (Appendix / Deep Dive) -->
+                <section class="card" id="sec-12" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0; font-size: 1.2rem; color: var(--accent-primary);">12. Technical Analysis (Appendix / Deep Dive)</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">Deep technical metrics, language distributions, entry points, and directory hierarchy.</p>
+                    <div id="sec-12-content"></div>
+                    <pre id="sec-12-tree" style="max-height: 350px; overflow-y: auto; background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-sm); font-family: 'JetBrains Mono', monospace; font-size: 0.8125rem; border: 1px solid var(--border-color); margin-top: 1rem;"></pre>
+                </section>
+
+                <!-- Section 13: Semantic Code Graph Summary -->
+                <section class="card" id="sec-13" style="margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <h3 style="margin: 0; font-size: 1.2rem; color: var(--accent-primary);">13. Semantic Code Graph Summary</h3>
+                        <a id="btn-sec13-graph" href="{{ url_for('main.graph') }}" class="btn btn-xs btn-primary">Open Interactive Semantic Code Graph &rarr;</a>
+                    </div>
+                    <div id="sec-13-content"></div>
+                </section>
+
+                <!-- Section 14: Observations and Limitations -->
+                <section class="card" id="sec-14" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0; font-size: 1.2rem; color: var(--accent-primary);">14. Observations and Limitations</h3>
+                    <ul id="sec-14-list" style="line-height: 1.7; font-size: 0.95rem;"></ul>
+                </section>
+
+                <!-- Section 15: Conclusion -->
+                <section class="card" id="sec-15" style="margin-bottom: 2rem;">
+                    <h3 style="margin-top: 0; font-size: 1.2rem; color: var(--accent-primary);">15. Conclusion</h3>
+                    <div style="background: var(--bg-tertiary); padding: 1.25rem; border-radius: var(--radius-sm); border-left: 4px solid var(--accent-primary);">
+                        <p id="sec-15-text" style="margin: 0; line-height: 1.8; font-size: 0.95rem;"></p>
+                    </div>
+                </section>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}

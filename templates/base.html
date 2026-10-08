@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CodeLens AI - Multi-Agent Software Comprehension{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Navigation Header -->
+        <header class="navbar">
+            <div class="nav-container">
+                <a href="{{ url_for('main.index') }}" class="brand-link">
+                    <div class="brand-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 18 22 12 16 6"></polyline>
+                            <polyline points="8 6 2 12 8 18"></polyline>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-title">CodeLens<span class="highlight">AI</span></span>
+                        <span class="brand-phase">Phase 1</span>
+                    </div>
+                </a>
+
+                <nav class="nav-links">
+                    <a href="{{ url_for('main.index') }}" class="nav-link">🏠 Home</a>
+                    <a href="{{ url_for('main.index') }}#github-analysis" class="nav-link">📦 Repositories</a>
+                    <a href="{{ url_for('main.analysis') }}" class="nav-link">🔍 Analysis</a>
+                    <a href="{{ url_for('main.architecture') }}" class="nav-link">🏗️ Architecture</a>
+                    <a href="{{ url_for('main.chat') }}" class="nav-link">💬 AI Chat</a>
+                    <a href="{{ url_for('main.report') }}" class="nav-link">📄 Project Report</a>
+                </nav>
+
+                <div class="nav-actions">
+                    <span class="badge badge-success">
+                        <span class="status-dot"></span> Phase 1 Active
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            {% block content %}
+            {% if error_message %}
+            <div class="error-container">
+                <h2>{{ error_message }}</h2>
+                <p>The requested resource could not be found or processed.</p>
+                <a href="{{ url_for('main.index') }}" class="btn btn-primary">Return Home</a>
+            </div>
+            {% endif %}
+            {% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-container">
+                <div class="footer-left">
+                    <p class="footer-project-title"><strong>CodeLens AI</strong> — Software Comprehension Platform</p>
+                    <p class="footer-subtitle">Repository Architecture, AI Chat, and Project Report</p>
+                </div>
+                <div class="footer-right">
+                    <div class="footer-tags">
+                        <span class="tag">Architecture</span>
+                        <span class="tag">AI Chat</span>
+                        <span class="tag">Project Report</span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

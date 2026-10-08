@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+
+{% block title %}CodeLens AI - Repository Evaluation & Suitability Ranking (Phase 4){% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero / Title Section -->
+    <section class="hero-section">
+        <div class="phase-pill">
+            <span class="pill-dot"></span>
+            <span>Academic Project • Phase 4: Repository Evaluation &amp; Suitability Ranking</span>
+        </div>
+        <h1 class="hero-title">CodeLens AI</h1>
+        <h2 class="hero-subtitle">AI-Powered Multi-Agent System for Open Source Project Analysis and Software Comprehension</h2>
+        <p class="hero-description">
+            CodeLens AI helps developers understand unfamiliar GitHub repositories by analyzing their code structure, dependencies, architecture, and repository relationships.
+        </p>
+    </section>
+
+    <!-- Main Workspace Grid -->
+    <div class="workspace-grid">
+        <!-- Left Column: URL Intake, Queue & Ranking Results -->
+        <div class="column-primary">
+            <!-- Section 1: GitHub Repository URL Input Card -->
+            <div class="card action-card" id="github-analysis">
+                <div class="card-header">
+                    <div class="card-icon-wrapper github-icon-bg">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="card-title">1. GitHub Repository URL</h3>
+                        <p class="card-subtitle">Add 1 to 10 open source GitHub repositories directly by URL</p>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <!-- Input Form -->
+                    <form id="add-repo-form" novalidate>
+                        <div class="form-group">
+                            <label for="repo-url" class="form-label">GitHub Repository URL</label>
+                            <div class="input-with-icon">
+                                <span class="input-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                    </svg>
+                                </span>
+                                <input
+                                    type="text"
+                                    id="repo-url"
+                                    name="repo_url"
+                                    class="form-input"
+                                    placeholder="https://github.com/psf/requests"
+                                    autocomplete="off"
+                                    spellcheck="false"
+                                >
+                            </div>
+                            <span class="field-hint">Format: <code>https://github.com/owner/repository</code> (Supports 1–10 repositories)</span>
+                        </div>
+
+                        <!-- Sample Quick-Fill Chips -->
+                        <div class="sample-links">
+                            <span class="sample-label">Direct samples:</span>
+                            <button type="button" class="chip-btn" data-url="https://github.com/pallets/flask">pallets/flask</button>
+                            <button type="button" class="chip-btn" data-url="https://github.com/django/django">django/django</button>
+                            <button type="button" class="chip-btn" data-url="https://github.com/fastapi/fastapi">fastapi/fastapi</button>
+                            <button type="button" class="chip-btn" data-url="https://github.com/psf/requests">psf/requests</button>
+                        </div>
+
+                        <!-- Inline Feedback Banner -->
+                        <div id="url-feedback" class="feedback-banner hidden" role="alert"></div>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions-row">
+                            <button type="submit" id="btn-add-repo" class="btn btn-secondary">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                <span>Add Repository</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Repositories to Analyze Queue Card -->
+            <div class="card repo-queue-card">
+                <div class="queue-header">
+                    <div class="queue-header-title">
+                        <h4>Repositories to analyze:</h4>
+                        <span id="queue-counter" class="badge badge-primary">0 / 10 added</span>
+                    </div>
+                    <button type="button" id="btn-clear-all" class="btn-text-danger hidden">Clear all</button>
+                </div>
+
+                <div class="queue-body">
+                    <!-- Empty State -->
+                    <div id="queue-empty-state" class="empty-state">
+                        <div class="empty-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="9" y1="3" x2="9" y2="21"></line>
+                            </svg>
+                        </div>
+                        <p class="empty-title">No repositories added yet</p>
+                        <p class="empty-desc">Enter repository URLs above, or search keywords on the right and click <strong>Select Repository</strong>.</p>
+                    </div>
+
+                    <!-- Dynamic Repositories List -->
+                    <ol id="repo-list" class="repo-list"></ol>
+                </div>
+
+                <!-- Queue Footer with Analyze Button -->
+                <div class="queue-footer">
+                    <button type="button" id="btn-focus-add" class="btn btn-outline">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        <span>Add Repository</span>
+                    </button>
+
+                    <button type="button" id="btn-analyze" class="btn btn-primary" disabled>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        <span>Analyze</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Phase 4: Repository Ranking & Suitability Evaluation Output -->
+            <div id="ranking-results-card" class="card ranking-card hidden">
+                <div class="ranking-header">
+                    <div>
+                        <h3 class="ranking-title">Repository Ranking</h3>
+                        <p class="ranking-subtitle">Repository Analysis Suitability (0–100%) calculated from actual GitHub code architecture, documentation, and activity data</p>
+                    </div>
+                    <span id="ranking-count-badge" class="badge badge-primary">0 Evaluated</span>
+                </div>
+
+                <!-- Recommended Repository Card -->
+                <div id="recommended-banner" class="recommended-card">
+                    <div class="recommended-badge-row">
+                        <span class="badge badge-recommended">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                            </svg>
+                            Recommended Repository
+                        </span>
+                        <div class="suitability-pill" id="recommended-suitability">92% Suitability</div>
+                    </div>
+
+                    <div class="recommended-repo-info">
+                        <h4 id="recommended-name" class="recommended-repo-name">Project A</h4>
+                        <a id="recommended-url" href="#" target="_blank" rel="noopener noreferrer" class="recommended-repo-link">https://github.com/...</a>
+                    </div>
+
+                    <p id="recommended-reason" class="recommended-reason-text">High keyword relevance and sufficient source-code structure.</p>
+
+                    <!-- Factor Breakdown Mini Grid -->
+                    <div class="factors-mini-grid" id="recommended-factors">
+                        <div class="factor-mini-item">
+                            <span class="factor-label">Keyword Relevance</span>
+                            <div class="factor-bar-bg"><div class="factor-bar-fill" id="bar-kw" style="width: 85%;"></div></div>
+                            <span class="factor-val" id="val-kw">85%</span>
+                        </div>
+                        <div class="factor-mini-item">
+                            <span class="factor-label">Code Architecture</span>
+                            <div class="factor-bar-bg"><div class="factor-bar-fill" id="bar-arch" style="width: 90%;"></div></div>
+                            <span class="factor-val" id="val-arch">90%</span>
+                        </div>
+                        <div class="factor-mini-item">
+                            <span class="factor-label">Documentation Quality</span>
+                            <div class="factor-bar-bg"><div class="factor-bar-fill" id="bar-doc" style="width: 88%;"></div></div>
+                            <span class="factor-val" id="val-doc">88%</span>
+                        </div>
+                        <div class="factor-mini-item">
+                            <span class="factor-label">Maintenance &amp; Activity</span>
+                            <div class="factor-bar-bg"><div class="factor-bar-fill" id="bar-act" style="width: 95%;"></div></div>
+                            <span class="factor-val" id="val-act">95%</span>
+                        </div>
+                    </div>
+
+                    <!-- Recommended Action -->
+                    <div class="recommended-action-row">
+                        <button type="button" id="btn-analyze-recommended" class="btn btn-primary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            <span>Analyze Recommended Repository</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Full Ranked Alternatives List -->
+                <div class="ranking-body">
+                    <div class="ranked-list-header">
+                        <h4>All Evaluated Alternatives</h4>
+                        <span class="field-hint">Ranked by calculated analysis suitability. You can manually choose any repository below.</span>
+                    </div>
+
+                    <div id="ranked-items-list" class="ranked-items-list"></div>
+                </div>
+
+                <!-- Active Selection Confirmation -->
+                <div id="active-target-banner" class="active-target-banner">
+                    <div class="target-info">
+                        <span class="target-label">Selected Target for Analysis:</span>
+                        <strong id="active-target-name">None</strong>
+                        <span id="active-target-score" class="badge badge-success">0% Suitability</span>
+                    </div>
+                    <div class="target-actions-row">
+                        <span class="target-subtext">Target confirmed. Proceed to acquire and perform static file/directory analysis.</span>
+                        <a id="btn-proceed-phase5" href="/analysis" class="btn btn-sm btn-primary">
+                            <span>Proceed to Phase 5 Code Analysis →</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Keyword Search (Phase 3) & Architecture Roadmap -->
+        <div class="column-secondary">
+            <!-- Section 2: Search GitHub Repositories (Phase 3) -->
+            <div class="card action-card" id="keyword-search">
+                <div class="card-header">
+                    <div class="card-icon-wrapper search-icon-bg">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="card-title">Search GitHub Repositories</h3>
+                        <p class="card-subtitle">Discover public open source repositories via GitHub API</p>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <form id="keyword-search-form" novalidate>
+                        <div class="form-group">
+                            <label for="keyword-input" class="form-label">Enter keyword</label>
+                            <div class="input-with-icon">
+                                <span class="input-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                </span>
+                                <input
+                                    type="text"
+                                    id="keyword-input"
+                                    name="keyword"
+                                    class="form-input"
+                                    placeholder="e.g. Python, Machine Learning, Django"
+                                    autocomplete="off"
+                                >
+                            </div>
+                            <span class="field-hint">Search GitHub's live repository database by domain, topic, or tech stack.</span>
+                        </div>
+
+                        <!-- Sample Keyword Chips -->
+                        <div class="sample-links">
+                            <span class="sample-label">Try keywords:</span>
+                            <button type="button" class="chip-btn keyword-chip" data-keyword="Python">Python</button>
+                            <button type="button" class="chip-btn keyword-chip" data-keyword="Machine Learning">Machine Learning</button>
+                            <button type="button" class="chip-btn keyword-chip" data-keyword="Django">Django</button>
+                            <button type="button" class="chip-btn keyword-chip" data-keyword="Flask">Flask</button>
+                            <button type="button" class="chip-btn keyword-chip" data-keyword="Artificial Intelligence">Artificial Intelligence</button>
+                            <button type="button" class="chip-btn keyword-chip" data-keyword="Data Science">Data Science</button>
+                        </div>
+
+                        <!-- Search Feedback Banner -->
+                        <div id="keyword-feedback" class="feedback-banner hidden" role="alert"></div>
+
+                        <!-- Search Action Button -->
+                        <div class="form-actions-row">
+                            <button type="submit" id="btn-search-keyword" class="btn btn-secondary">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <span>Search</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Search Results Section -->
+                <div id="search-results-wrapper" class="search-results-wrapper hidden">
+                    <div class="search-results-header">
+                        <div class="results-header-info">
+                            <h4 id="results-heading">Candidate Repositories</h4>
+                            <span id="results-count-badge" class="badge badge-primary">0 results</span>
+                        </div>
+                        <span class="badge badge-subtle-dark">Factual Live Data</span>
+                    </div>
+
+                    <div id="search-results-list" class="search-results-list"></div>
+                </div>
+            </div>
+
+            <!-- Architecture Roadmap Card -->
+            <div class="card overview-card" id="roadmap">
+                <div class="overview-header">
+                    <div>
+                        <h3 class="overview-title">Project Architecture Roadmap</h3>
+                        <p class="overview-subtitle">Engineering milestones for final-year project</p>
+                    </div>
+                </div>
+
+                <div class="stages-vertical">
+                    <div class="stage-item completed">
+                        <div class="stage-badge">Phase 1</div>
+                        <div class="stage-name">Foundation &amp; Architecture</div>
+                        <p class="stage-desc">Modular Flask backend, configuration, and layout.</p>
+                        <span class="stage-status status-complete">Completed</span>
+                    </div>
+
+                    <div class="stage-item completed">
+                        <div class="stage-badge">Phase 2</div>
+                        <div class="stage-name">URL Input &amp; Validation</div>
+                        <p class="stage-desc">Single/multiple repository intake (1–10), format validation, and staging pipeline.</p>
+                        <span class="stage-status status-complete">Completed</span>
+                    </div>
+
+                    <div class="stage-item completed">
+                        <div class="stage-badge">Phase 3</div>
+                        <div class="stage-name">Keyword Repository Discovery</div>
+                        <p class="stage-desc">GitHub API search, candidate discovery, and queue selection integration.</p>
+                        <span class="stage-status status-complete">Completed</span>
+                    </div>
+
+                    <div class="stage-item completed">
+                        <div class="stage-badge">Phase 4</div>
+                        <div class="stage-name">Repository Suitability Ranking</div>
+                        <p class="stage-desc">Factual multi-factor suitability percentage, ranking, and recommended repository selection.</p>
+                        <span class="stage-status status-complete">Completed</span>
+                    </div>
+
+                    <div class="stage-item completed">
+                        <div class="stage-badge">Phase 5</div>
+                        <div class="stage-name">Repository Acquisition &amp; Static Analysis</div>
+                        <p class="stage-desc">Safe shallow cloning, directory/file hierarchy scanning, language detection, and statistics.</p>
+                        <span class="stage-status status-complete">Completed</span>
+                    </div>
+
+                    <div class="stage-item completed">
+                        <div class="stage-badge">Phase 6</div>
+                        <div class="stage-name">AST Code Analysis &amp; Semantic Code Graph</div>
+                        <p class="stage-desc">Python &amp; Java AST extraction, classes, routines, imports, and NetworkX semantic code graph.</p>
+                        <span class="stage-status status-complete">Completed</span>
+                    </div>
+
+                    <div class="stage-item in-progress">
+                        <div class="stage-badge">Phase 7</div>
+                        <div class="stage-name">Architecture Explorer &amp; AI Report Generator</div>
+                        <p class="stage-desc">Human-readable progressive architecture explorer, cycle detection, and factual 16-section report generation.</p>
+                        <span class="stage-status status-active">Review Focus</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

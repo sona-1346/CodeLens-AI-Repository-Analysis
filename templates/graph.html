@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}CodeLens AI - Semantic Code Graph (Technical View){% endblock %}
+
+{% block content %}
+<div class="semantic-graph-page">
+    <div class="container">
+
+        <!-- Top Breadcrumbs Bar -->
+        <div class="arch-breadcrumbs-bar">
+            <div class="breadcrumbs-list">
+                <a href="{{ url_for('main.index') }}" class="breadcrumb-item">Home</a>
+                <span class="breadcrumb-sep">/</span>
+                <a href="{{ url_for('main.analysis') }}" class="breadcrumb-item">Analysis</a>
+                <span class="breadcrumb-sep">/</span>
+                <span class="breadcrumb-item active">Semantic Code Graph (Technical Layer)</span>
+            </div>
+            <div class="arch-level-pills">
+                <a href="{{ url_for('main.architecture') }}" class="btn btn-xs btn-outline" style="text-decoration: none;">
+                    &larr; Switch to Human-Readable Architecture Explorer
+                </a>
+            </div>
+        </div>
+
+        <!-- Technical View Banner -->
+        <div class="card graph-technical-banner" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent-purple, #a855f7);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                        <span class="badge badge-info" style="font-weight: 600;">Phase 7 Technical Layer</span>
+                        <h3 style="margin: 0; font-size: 1.25rem;">Semantic Code Graph &amp; Relational Engine</h3>
+                    </div>
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.875rem;">
+                        Detailed technical graph representation exposing all low-level code symbols, classes, functions, methods, and syntax-derived relationships (imports, calls, inheritance, containment).
+                    </p>
+                </div>
+                <div>
+                    <a href="{{ url_for('main.architecture') }}" class="btn btn-sm btn-primary">
+                        <span>High-Level Architecture Explorer &rarr;</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Semantic Code Graph Interactive Section -->
+        <section class="card graph-interactive-section" style="padding: 1.5rem;">
+            <!-- Controls & Filters Toolbar -->
+            <div class="graph-toolbar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+                <div class="filter-group" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                    <span class="filter-group-label" style="font-size: 0.8125rem; font-weight: 600;">Filter Nodes:</span>
+                    <button class="graph-filter-btn active" data-type="all" onclick="filterGraphNodes('all', this)">All</button>
+                    <button class="graph-filter-btn" data-type="file" onclick="filterGraphNodes('file', this)">Files</button>
+                    <button class="graph-filter-btn" data-type="class" onclick="filterGraphNodes('class', this)">Classes</button>
+                    <button class="graph-filter-btn" data-type="function" onclick="filterGraphNodes('function', this)">Functions</button>
+                    <button class="graph-filter-btn" data-type="package" onclick="filterGraphNodes('package', this)">Packages</button>
+                </div>
+
+                <div class="graph-search-box" style="position: relative; min-width: 250px;">
+                    <input 
+                        type="text" 
+                        id="graph-node-search" 
+                        class="form-input form-input-sm" 
+                        placeholder="Search graph nodes..." 
+                        oninput="searchGraphNodes(this.value)"
+                        style="width: 100%; padding: 0.4rem 0.75rem; font-size: 0.8125rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-primary);"
+                    />
+                </div>
+            </div>
+
+            <!-- Graph Legend -->
+            <div class="graph-legend-bar" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; font-size: 0.75rem; color: var(--text-secondary);">
+                <span style="font-weight: 600;">Node Types:</span>
+                <span><span class="legend-color-dot" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #3b82f6; margin-right: 4px;"></span> File</span>
+                <span><span class="legend-color-dot" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #a855f7; margin-right: 4px;"></span> Class</span>
+                <span><span class="legend-color-dot" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #10b981; margin-right: 4px;"></span> Function / Method</span>
+                <span><span class="legend-color-dot" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #f59e0b; margin-right: 4px;"></span> Package / Dependency</span>
+            </div>
+
+            <!-- Canvas Viewport with Overlay Controls -->
+            <div style="position: relative; height: 600px; background: var(--bg-primary); border-radius: var(--radius-md); border: 1px solid var(--border-color); overflow: hidden;">
+                <canvas id="semantic-graph-canvas" style="width: 100%; height: 100%; display: block;"></canvas>
+
+                <div style="position: absolute; bottom: 1rem; right: 1rem; display: flex; gap: 0.5rem; z-index: 10;">
+                    <button class="btn btn-xs btn-outline" onclick="zoomSemanticGraph(1.2)" title="Zoom In" style="background: rgba(15, 23, 42, 0.8);">+</button>
+                    <button class="btn btn-xs btn-outline" onclick="zoomSemanticGraph(0.8)" title="Zoom Out" style="background: rgba(15, 23, 42, 0.8);">&minus;</button>
+                    <button class="btn btn-xs btn-outline" onclick="resetSemanticGraphView()" title="Reset View" style="background: rgba(15, 23, 42, 0.8);">&#x21bb;</button>
+                </div>
+
+                <div style="position: absolute; top: 1rem; left: 1rem; background: rgba(15, 23, 42, 0.75); padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; color: var(--text-muted); border: 1px solid var(--border-color);">
+                    <span>Click node to inspect &bull; Drag to pan &bull; Scroll to zoom</span>
+                </div>
+            </div>
+
+            <!-- Node Inspector Details Drawer -->
+            <div id="graph-inspector-drawer" class="card" style="margin-top: 1.5rem; display: none; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <h4 id="inspector-node-title" style="margin: 0; font-size: 1.1rem; color: var(--text-primary);">Node Details</h4>
+                    <span id="inspector-node-type" class="badge badge-info">Type</span>
+                </div>
+                <div id="inspector-node-meta" style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6;"></div>
+            </div>
+        </section>
+
+    </div>
+</div>
+{% endblock %}

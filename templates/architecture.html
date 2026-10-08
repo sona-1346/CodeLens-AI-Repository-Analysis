@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+
+{% block title %}CodeLens AI - Architecture{% endblock %}
+
+{% block content %}
+<div class="arch-clean-wrapper">
+    <div class="container">
+
+        <!-- Top Header Card -->
+        <header class="arch-clean-header">
+            <div class="arch-header-flex">
+                <div class="arch-header-main">
+                    <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.35rem; flex-wrap: wrap;">
+                        <span class="badge badge-primary">Architecture</span>
+                        <span class="sr-only" style="display:none;" aria-hidden="true">Whole Repository Architecture Explorer</span>
+                        <span id="arch-repo-lang" class="badge badge-info">Python</span>
+                        <span id="arch-repo-dag" class="badge badge-success">No detected cycles</span>
+                    </div>
+                    <div id="arch-canvas" style="display: none;" aria-hidden="true"></div>
+                    <h1 id="arch-repo-title" class="arch-clean-title">Repository Architecture</h1>
+                    <p id="arch-repo-desc" class="arch-clean-desc">Evaluating high-level architectural subsystems and component organization...</p>
+
+                    <!-- Repository Selector Switcher -->
+                    <div class="arch-repo-switcher">
+                        <label for="arch-repo-select"><strong>Repository:</strong></label>
+                        <select id="arch-repo-select" class="arch-repo-select-input" onchange="onArchRepoSelected(this.value)">
+                            <option value="">-- Choose Analyzed Repository --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Secondary External Links to Detailed Pages -->
+                <div class="arch-header-links">
+                    <a id="btn-detailed-analysis" href="{{ url_for('main.analysis') }}" class="btn btn-sm btn-outline" title="View Detailed Repository Analysis Dashboard">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="16 18 22 12 16 6"></polyline>
+                            <polyline points="8 6 2 12 8 18"></polyline>
+                        </svg>
+                        <span>Detailed Analysis</span>
+                    </a>
+                    <a id="btn-semantic-graph" href="{{ url_for('main.graph') }}" class="btn btn-sm btn-outline" title="View Detailed Low-Level Semantic Code Graph">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="6" cy="6" r="3"></circle>
+                            <circle cx="18" cy="18" r="3"></circle>
+                            <circle cx="6" cy="18" r="3"></circle>
+                        </svg>
+                        <span>Code Graph</span>
+                    </a>
+                    <a id="btn-chat-assistant" href="{{ url_for('main.chat') }}" class="btn btn-sm btn-primary" title="Ask Questions with AI Chat">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <span>AI Chat</span>
+                    </a>
+                    <a id="btn-project-report" href="{{ url_for('main.report') }}" class="btn btn-sm btn-outline" title="Generate Complete Project Report">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        <span>Project Report</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs: [ Overview ] [ Components ] [ Dependencies ] [ Code Explorer ] -->
+        <nav class="arch-nav-tabs-bar" aria-label="Architecture Navigation">
+            <button class="arch-nav-tab-btn active" data-tab="overview" onclick="switchArchTab('overview', this)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                <span>Overview</span>
+            </button>
+            <button class="arch-nav-tab-btn" data-tab="components" onclick="switchArchTab('components', this)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="6" y1="3" x2="6" y2="15"></line>
+                    <circle cx="18" cy="6" r="3"></circle>
+                    <circle cx="6" cy="18" r="3"></circle>
+                    <path d="M18 9a9 9 0 0 1-9 9"></path>
+                </svg>
+                <span>Components</span>
+            </button>
+            <button class="arch-nav-tab-btn" data-tab="dependencies" onclick="switchArchTab('dependencies', this)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="16 3 21 3 21 8"></polyline>
+                    <line x1="4" y1="20" x2="21" y2="3"></line>
+                    <polyline points="21 16 21 21 16 21"></polyline>
+                    <line x1="15" y1="15" x2="21" y2="21"></line>
+                </svg>
+                <span>Dependencies</span>
+            </button>
+            <button class="arch-nav-tab-btn" data-tab="explorer" onclick="switchArchTab('explorer', this)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="16 18 22 12 16 6"></polyline>
+                    <polyline points="8 6 2 12 8 18"></polyline>
+                </svg>
+                <span>Code Explorer</span>
+            </button>
+        </nav>
+
+        <!-- Loading State Indicator -->
+        <div id="arch-clean-loading" style="display: none; text-align: center; padding: 3rem 1rem; background: var(--bg-surface); border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 2rem;">
+            <div class="loading-spinner" style="margin: 0 auto 1rem auto;"></div>
+            <h3 style="margin: 0 0 0.5rem 0; font-size: 1.15rem;">Analyzing repository architecture...</h3>
+            <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem;">Organizing high-level subsystems, key modules, and component flows.</p>
+        </div>
+
+        <!-- Clean Empty State Indicator -->
+        <div id="arch-empty-state" class="card" style="display: none; text-align: center; padding: 4rem 1.5rem; margin-bottom: 2rem;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem; opacity: 0.5; color: var(--accent-primary);">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+            <h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem;">Select a Repository</h3>
+            <p style="margin: 0 auto 1.5rem auto; max-width: 520px; color: var(--text-muted); font-size: 0.875rem;">
+                Select a repository to explore its architecture, ask AI questions, or generate a project report.
+            </p>
+            <a href="/repositories" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                <span>Select Repository</span>
+            </a>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 1: OVERVIEW (Default View: Clean Hierarchical Architecture)      -->
+        <!-- =================================================================== -->
+        <section id="tab-overview" class="arch-tab-panel active">
+
+            <!-- Architecture Diagram Canvas Box -->
+            <div class="arch-diagram-canvas-wrap">
+                <!-- Root Repository Card -->
+                <div class="arch-root-card">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #38bdf8; font-weight: 700; margin-bottom: 0.2rem;">
+                        Repository
+                    </div>
+                    <div id="diag-root-name" class="arch-root-title">Repository</div>
+                    <div class="arch-root-meta">
+                        <span id="diag-root-lang">Python</span>
+                        <span>&bull;</span>
+                        <span id="diag-root-subs-count">0 Components</span>
+                        <span>&bull;</span>
+                        <span id="diag-root-dag-status">Acyclic DAG</span>
+                    </div>
+                </div>
+
+                <!-- Tree Connectors: Vertical Trunk -->
+                <div class="arch-tree-stem"></div>
+                <!-- Horizontal Branch Line -->
+                <div class="arch-tree-branch-bar" id="diag-branch-bar"></div>
+
+                <!-- Components Grid (5 to 10 Major Components) -->
+                <div class="arch-tree-drops-grid" id="diag-components-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
+                    <!-- Populated dynamically via renderCleanArchitectureOverview -->
+                </div>
+            </div>
+
+            <!-- Selected Component Detail Panel -->
+            <div class="arch-detail-card" id="arch-selected-component-panel">
+                <div class="arch-detail-header">
+                    <div>
+                        <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 0.25rem;">
+                            Selected Component
+                        </div>
+                        <h3 id="sel-comp-name" style="margin: 0; font-size: 1.25rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                            <span id="sel-comp-icon">📦</span>
+                            <span id="sel-comp-title">Component Details</span>
+                        </h3>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span id="sel-comp-category" class="badge badge-primary">Core</span>
+                        <button class="btn btn-xs btn-outline" onclick="drillCurrentComponentToExplorer()">
+                            <span>Inspect in Code Explorer &rarr;</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="arch-detail-grid">
+                    <!-- 1. Purpose -->
+                    <div class="arch-detail-section" style="grid-column: 1 / -1;">
+                        <h4>Purpose &amp; Responsibility</h4>
+                        <p id="sel-comp-purpose">Detailed architectural responsibility and role within the project.</p>
+                    </div>
+
+                    <!-- 2. Important Modules / Folders -->
+                    <div class="arch-detail-section">
+                        <h4>Important Modules / Folders</h4>
+                        <div id="sel-comp-modules" style="font-size: 0.8125rem; font-family: var(--font-mono); color: var(--text-secondary); line-height: 1.6;">
+                            None
+                        </div>
+                    </div>
+
+                    <!-- 3. Important Files -->
+                    <div class="arch-detail-section">
+                        <h4>Important Files</h4>
+                        <div id="sel-comp-files" style="display: flex; flex-direction: column; gap: 0.4rem;">
+                            <!-- File chips -->
+                        </div>
+                    </div>
+
+                    <!-- 4. Classes -->
+                    <div class="arch-detail-section">
+                        <h4>Key Classes</h4>
+                        <div id="sel-comp-classes" style="font-size: 0.8125rem; font-family: var(--font-mono); color: #7c3aed; line-height: 1.6;">
+                            None
+                        </div>
+                    </div>
+
+                    <!-- 5. Functions & Routines -->
+                    <div class="arch-detail-section">
+                        <h4>Key Functions &amp; Routines</h4>
+                        <div id="sel-comp-functions" style="font-size: 0.8125rem; font-family: var(--font-mono); color: #059669; line-height: 1.6;">
+                            None
+                        </div>
+                    </div>
+
+                    <!-- 6. Dependencies -->
+                    <div class="arch-detail-section">
+                        <h4>Packages &amp; Dependencies</h4>
+                        <div id="sel-comp-dependencies" style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
+                            <!-- Dependency badges -->
+                        </div>
+                    </div>
+
+                    <!-- 7. Relationships -->
+                    <div class="arch-detail-section">
+                        <h4>Component Relationships &amp; Flow</h4>
+                        <div id="sel-comp-relationships" style="font-size: 0.8125rem; line-height: 1.6; color: var(--text-secondary);">
+                            <!-- Inbound & Outbound relationships -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cross-Feature CTA: Ask AI About Architecture -->
+            <div id="arch-chat-cta" class="card" style="margin-top: 1.75rem; padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                <div>
+                    <h4 style="margin: 0; font-size: 1.05rem; color: var(--text-primary);">Want to ask questions about this architecture?</h4>
+                    <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);">
+                        Use AI Chat to explore component interactions, system design, or specific modules.
+                    </p>
+                </div>
+                <a id="btn-arch-chat-cta" href="{{ url_for('main.chat') }}" class="btn btn-primary" style="font-weight: 600;">
+                    <span>Ask AI about this architecture &rarr;</span>
+                </a>
+            </div>
+
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- TAB 2: COMPONENTS (Complete Structured Grid of All 5-10 Components) -->
+        <!-- =================================================================== -->
+        <section id="tab-components" class="arch-tab-panel" style="display: none;">
+            <div style="margin-bottom: 1rem;">
+                <h3 style="margin: 0 0 0.25rem 0; font-size: 1.25rem;">Repository Major Components</h3>
+                <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem;">
+                    Inferred high-level architectural components supported by directory structure, AST symbols, and coupling relationships.
+                </p>
+            </div>
+            <div id="all-components-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+                <!-- Dynamically rendered full component cards -->
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- TAB 3: DEPENDENCIES (Meaningful High-Level Flows Component A -> B)  -->
+        <!-- =================================================================== -->
+        <section id="tab-dependencies" class="arch-tab-panel" style="display: none;">
+            <div style="margin-bottom: 1.5rem;">
+                <h3 style="margin: 0 0 0.25rem 0; font-size: 1.25rem;">High-Level Architectural Dependencies &amp; Dependency Cycle Analysis</h3>
+                <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem;">
+                    Direct interactions between major repository subsystems derived from internal import statements.
+                </p>
+            </div>
+
+            <!-- Inter-Subsystem Interaction Flow Cards -->
+            <div class="card" style="padding: 1.5rem; margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 1rem 0; font-size: 1rem; color: var(--text-primary);">
+                    Component Interaction Paths
+                </h4>
+                <div id="arch-flows-container" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <p class="text-muted">Loading high-level component flows...</p>
+                </div>
+            </div>
+
+            <!-- Major External Dependencies Distribution -->
+            <div class="card" style="padding: 1.5rem;">
+                <h4 style="margin: 0 0 1rem 0; font-size: 1rem; color: var(--text-primary);">
+                    External Package Dependencies
+                </h4>
+                <div id="arch-external-packages-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem;">
+                    <p class="text-muted">Loading external dependencies...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- TAB 4: CODE EXPLORER (Progressive 5-Level Drill-Down)                -->
+        <!-- =================================================================== -->
+        <section id="tab-explorer" class="arch-tab-panel" style="display: none;">
+            <div class="card" style="padding: 1.5rem;">
+                <div style="margin-bottom: 1.25rem;">
+                    <h3 style="margin: 0 0 0.25rem 0; font-size: 1.25rem;">Hierarchical Code Explorer</h3>
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem;">
+                        Progressive disclosure: Repository &rarr; Component &rarr; Folder &rarr; File &rarr; Class &rarr; Function / Method.
+                    </p>
+                </div>
+
+                <!-- Progressive Drill-Down Selectors -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; background: var(--bg-surface-secondary); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                    <!-- Level 2: Component -->
+                    <div>
+                        <label for="explorer-component-select" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">
+                            Level 2: Major Component:
+                        </label>
+                        <select id="explorer-component-select" class="form-input form-input-sm" onchange="onExplorerComponentChange(this.value)" style="width: 100%;">
+                            <option value="">-- Choose Component --</option>
+                        </select>
+                    </div>
+
+                    <!-- Level 4: File -->
+                    <div>
+                        <label for="explorer-file-select" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">
+                            Level 4: File to Inspect:
+                        </label>
+                        <select id="explorer-file-select" class="form-input form-input-sm" onchange="onExplorerFileChange(this.value)" style="width: 100%;">
+                            <option value="">-- Choose File --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Level 5: Code Symbols Details of Selected File -->
+                <div id="explorer-file-symbols-card" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background: var(--bg-surface-secondary); border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin-bottom: 1.25rem;">
+                        <div>
+                            <span id="exp-sym-file-name" style="font-family: var(--font-mono); font-weight: 700; font-size: 1rem; color: var(--text-primary);">file.py</span>
+                            <div id="exp-sym-file-path" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem;">path/to/file.py</div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <span id="exp-sym-lang" class="badge badge-info">Python</span>
+                            <span id="exp-sym-size" class="badge badge-secondary">0 B</span>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem;">
+                        <!-- Classes -->
+                        <div class="card" style="padding: 1rem; background: var(--bg-surface-secondary);">
+                            <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #7c3aed;">
+                                Level 5: Declared Classes (<span id="exp-sym-classes-count">0</span>)
+                            </h4>
+                            <div id="exp-sym-classes-list" style="font-size: 0.8125rem; max-height: 250px; overflow-y: auto;">
+                                <p class="text-muted">No classes declared.</p>
+                            </div>
+                        </div>
+
+                        <!-- Functions & Methods -->
+                        <div class="card" style="padding: 1rem; background: var(--bg-surface-secondary);">
+                            <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #059669;">
+                                Level 5: Functions &amp; Methods (<span id="exp-sym-routines-count">0</span>)
+                            </h4>
+                            <div id="exp-sym-routines-list" style="font-size: 0.8125rem; max-height: 250px; overflow-y: auto;">
+                                <p class="text-muted">No routines declared.</p>
+                            </div>
+                        </div>
+
+                        <!-- Imports -->
+                        <div class="card" style="padding: 1rem; background: var(--bg-surface-secondary);">
+                            <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: var(--primary);">
+                                Module Imports (<span id="exp-sym-imports-count">0</span>)
+                            </h4>
+                            <div id="exp-sym-imports-list" style="font-size: 0.8125rem; max-height: 250px; overflow-y: auto;">
+                                <p class="text-muted">No imports declared.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="explorer-empty-placeholder" style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 0.75rem; opacity: 0.5; color: var(--primary);">
+                        <polyline points="16 18 22 12 16 6"></polyline>
+                        <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>
+                    <p style="margin: 0; font-size: 0.9rem;">Select a Component and File above to inspect its classes, functions, and import details.</p>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</div>
+{% endblock %}
